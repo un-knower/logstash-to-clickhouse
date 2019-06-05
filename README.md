@@ -1,3 +1,7 @@
+# For gzip csv logstash input file example
+
+`git checkout gzip-csv`
+
 # logstash-to-clickhouse example
 
 This repo is for me to record how to use logstash, filebeat and some logstash plugins to insert data from files to clickhouse database table. Refer to this [great post](https://www.altinity.com/blog/2017/12/18/logstash-with-clickhouse):
