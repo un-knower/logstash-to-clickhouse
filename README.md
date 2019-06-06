@@ -1,3 +1,7 @@
+# For plainn csv file input to clickhouse
+
+`git checkout csv-location`
+
 # For gzip csv logstash input file example
 
 `git checkout gzip-csv`
@@ -18,28 +22,22 @@ This repo is for me to record how to use logstash, filebeat and some logstash pl
 
 ```
 USE default;
-CREATE TABLE nginx_access (
-  logdate Date,
-  logdatetime DateTime,
-  request String,
-  agent String,
-  os String,
-  minor String,
-  auth String,
-  ident String,
-  verb String,
-  patch String,
-  referrer String,
-  major String,
-  build String,
-  response UInt32,
-  bytes UInt32,
-  clientip String,
-  name String,
-  os_name String,
-  httpversion String,
-  device String
-) Engine = MergeTree(logdate, (logdatetime, clientip, os), 8192);
+CREATE TABLE IF NOT EXISTS location
+(
+    `subscribe_id` String,
+    `device` String,
+    `device_model` String,
+    `started_at` DateTime,
+    `ended_at` DateTime,
+    `lat` Nullable(Float64),
+    `long` Nullable(Float64),
+    `position` String,
+    `signal` String
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMMDD(started_at)
+ORDER BY started_at
+SETTINGS index_granularity = 8192
 ```
 
 After created table, exit by `Ctrl+D`
@@ -82,36 +80,10 @@ cd /usr/share/logstash/bin
 after seeing `[INFO ][logstash.agent ] Successfully started Logstash API endpoint {:port=>9600}`,
 keep logstash server on and `open a new terminal`.
 
-7. change `filebeat.docker.yml` to your local machine ip
-
-from
+7. `./connect-clickhouse-client.sh` to check clickhouse if recive logs
 
 ```
-output.logstash:
-  hosts: ['192.168.3.78:5044']
-```
-
-to
-
-```
-output.logstash:
-  hosts: ['yourlocalip:5044']
-```
-
-8. `./start-filebeat.sh` will start read nginx logs in `sample-nginx-logs` and send it to logstash server, then logstash server will insert logs to clickhouse automatically.
-
-after seeing
-
-```
-log.go:91: INFO Harvester started for file: /var/log/nginx/access.log
-```
-
-open a new termianl and go next step
-
-9. `./connect-clickhouse-client.sh` to check clickhouse if recive logs
-
-```
-SELECT * FROM nginx_access
+SELECT * FROM location
 ```
 
 10. Done, exit all containers and clean clickhouse server data by `sudo rm -rf ./dbdata`
